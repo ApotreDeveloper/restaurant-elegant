@@ -1,0 +1,81 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Le Gourmet Élégant - Restaurant gastronomique au cœur de Paris. Cuisine d'auteur, produits de saison et cadre raffiné." />
+    <meta property="og:title" content="Le Gourmet Élégant" />
+    <meta property="og:description" content="Une expérience gastronomique inoubliable." />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1514362545857-3bc16549766b?q=80&w=1200" />
+    <meta property="og:type" content="website" />
+    <title>Le Gourmet Élégant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                DEFAULT: '#D4AF37', // Elegant Gold
+                foreground: '#1B2838',
+              },
+              secondary: {
+                DEFAULT: '#1B2838', // Dark Navy
+                foreground: '#FFF8E7',
+              },
+              accent: {
+                DEFAULT: '#FFF8E7', // Cream White
+                foreground: '#1B2838',
+              },
+            },
+            fontFamily: {
+              serif: ['Playfair Display', 'serif'],
+              sans: ['Lato', 'sans-serif'],
+            },
+          },
+        },
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/react-quill@1.3.3/dist/quill.snow.css" rel="stylesheet">
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "react-hook-form": "https://esm.sh/react-hook-form@^7.71.1",
+    "zod": "https://esm.sh/zod@^4.3.6",
+    "clsx": "https://esm.sh/clsx@^2.1.1",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.95.3",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.3",
+    "path": "https://esm.sh/path@^0.12.7",
+    "zustand": "https://esm.sh/zustand@^5.0.11",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "@hookform/resolvers/": "https://esm.sh/@hookform/resolvers@^5.2.2/",
+    "url": "https://esm.sh/url@^0.11.4",
+    "tailwind-merge": "https://esm.sh/tailwind-merge@^3.4.0",
+    "react-dom": "https://esm.sh/react-dom@^19.2.4",
+    "zustand/": "https://esm.sh/zustand@^5.0.11/",
+    "recharts": "https://esm.sh/recharts@2.12.2?external=react,react-dom",
+    "date-fns": "https://esm.sh/date-fns@3.3.1",
+    "date-fns/locale": "https://esm.sh/date-fns@3.3.1/locale",
+    "date-fns/": "https://esm.sh/date-fns@^4.1.0/",
+    "@dnd-kit/core": "https://esm.sh/@dnd-kit/core@6.1.0",
+    "@dnd-kit/sortable": "https://esm.sh/@dnd-kit/sortable@8.0.0",
+    "@dnd-kit/utilities": "https://esm.sh/@dnd-kit/utilities@3.2.2",
+    "react-quill": "https://esm.sh/react-quill@2.0.0",
+    "react-helmet-async": "https://esm.sh/react-helmet-async@2.0.4"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-accent text-secondary font-sans antialiased">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
