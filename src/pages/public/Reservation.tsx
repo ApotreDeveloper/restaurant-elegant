@@ -47,7 +47,7 @@ const schema = z.object({
   }, "Date invalide (entre aujourd'hui et dans 3 mois)"),
   time: z.string().min(1, "L'heure est requise"),
   guests: z.number().min(1, "Au moins 1 personne").max(12, "Maximum 12 personnes via le formulaire"),
-  dish_id: z.string().optional(),
+  id: z.string().optional(),
   notes: z.string().max(500, "Maximum 500 caractères").optional(),
 });
 
@@ -142,7 +142,7 @@ const Reservation: React.FC = () => {
   const nextStep = async () => {
     let fieldsToValidate: (keyof FormData)[] = [];
     if (step === 1) fieldsToValidate = ['name', 'email', 'phone'];
-    if (step === 2) fieldsToValidate = ['date', 'time', 'guests', 'dish_id', 'notes'];
+    if (step === 2) fieldsToValidate = ['date', 'time', 'guests', 'id', 'notes'];
 
     const isValid = await trigger(fieldsToValidate);
     if (isValid) setStep(s => s + 1);
@@ -161,7 +161,7 @@ const Reservation: React.FC = () => {
         reservation_date: data.date,
         reservation_time: data.time,
         number_of_guests: data.guests,
-        dish_id: data.dish_id || null,
+        id: data.id || null,
         special_requests: data.notes
       };
 
@@ -341,7 +341,7 @@ const Reservation: React.FC = () => {
                       <Utensils size={14} /> Pré-commander un plat (Optionnel)
                     </label>
                     <select 
-                      {...register('dish_id')}
+                      {...register('id')}
                       className="w-full bg-transparent border-b border-secondary/20 py-2 text-secondary focus:outline-none focus:border-primary transition-colors text-sm"
                     >
                       <option value="">-- Choisir un plat --</option>
@@ -387,10 +387,10 @@ const Reservation: React.FC = () => {
                         <span className="text-secondary/60">Invités</span>
                         <span className="font-bold text-secondary">{selectedGuests} personnes</span>
                      </div>
-                     {watch('dish_id') && (
+                     {watch('id') && (
                         <div className="flex justify-between border-b border-secondary/10 pb-2">
                            <span className="text-secondary/60">Plat pré-commandé</span>
-                           <span className="font-bold text-secondary truncate max-w-[150px]">{menuItems.find(i => i.id === watch('dish_id'))?.name}</span>
+                           <span className="font-bold text-secondary truncate max-w-[150px]">{menuItems.find(i => i.id === watch('id'))?.name}</span>
                         </div>
                      )}
                   </div>

@@ -160,7 +160,6 @@ export const createReservation = async (reservationData: Partial<ReservationData
         reservation_date: reservationData.reservation_date,
         reservation_time: reservationData.reservation_time,
         number_of_guests: reservationData.number_of_guests,
-        dish_id: reservationData.dish_id, // Optional pre-order
         special_requests: reservationData.special_requests,
         status: 'pending'
       }])
