@@ -54,23 +54,35 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ initialData, onRefres
     resolver: zodResolver(schema)
   });
 
-  useEffect(() => {
-    if (initialData) {
-      reset({
-        name: initialData.name,
-        tagline: initialData.tagline,
-        description: initialData.description,
-        address: initialData.address,
-        phone: initialData.phone,
-        email: initialData.email,
-        website: initialData.website,
-        settings: initialData.settings,
-        social: initialData.social
-      });
-      setLogoPreview(initialData.logo_url || null);
-      setOpeningHours(initialData.openingHours);
-    }
-  }, [initialData, reset]);
+useEffect(() => {
+  if (initialData) {
+    // On s'assure qu'aucune valeur n'est 'null' pour éviter l'erreur de composant contrôlé
+    reset({
+      name: initialData.name || '',
+      tagline: initialData.tagline || '',
+      description: initialData.description || '',
+      address: initialData.address || '',
+      phone: initialData.phone || '',
+      email: initialData.email || '',
+      website: initialData.website || '',
+      settings: {
+        delivery_fee: initialData.settings?.delivery_fee ?? 0,
+        tax_rate: initialData.settings?.tax_rate ?? 0,
+        min_order_free_delivery: initialData.settings?.min_order_free_delivery ?? 0,
+        preparation_time: initialData.settings?.preparation_time ?? 15,
+      },
+      social: {
+        facebook: initialData.social?.facebook || '',
+        instagram: initialData.social?.instagram || '',
+        twitter: initialData.social?.twitter || '',
+        tiktok: initialData.social?.tiktok || '',
+        linkedin: initialData.social?.linkedin || '',
+      }
+    });
+    setLogoPreview(initialData.logo_url || null);
+    setOpeningHours(initialData.openingHours || {}); // Sécurité si openingHours est undefined
+  }
+}, [initialData, reset]);
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
