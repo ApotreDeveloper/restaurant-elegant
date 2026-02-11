@@ -10,6 +10,7 @@ import {
 import GeneralSettings from '../../components/admin/settings/GeneralSettings';
 import NavigationSettings from '../../components/admin/settings/NavigationSettings';
 import AboutSettings from '../../components/admin/settings/AboutSettings';
+import PreferencesSettings from '../../components/admin/settings/PreferencesSettings';
 import { useRestaurantStore } from '../../stores/useRestaurantStore';
 import { cn } from '../../utils/cn';
 
@@ -38,13 +39,7 @@ const Settings: React.FC = () => {
       case 'about':
         return <AboutSettings initialData={aboutPage} onRefresh={fetchAboutPage} />;
       case 'preferences':
-        return (
-           <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm text-center">
-              <SettingsIcon size={48} className="mx-auto text-slate-200 mb-4" />
-              <h3 className="text-xl font-bold text-slate-700">Préférences Système</h3>
-              <p className="text-slate-500 mt-2">Bientôt disponible : Gestion multi-langues, devises et thèmes.</p>
-           </div>
-        );
+        return <PreferencesSettings />;
       default:
         return null;
     }
