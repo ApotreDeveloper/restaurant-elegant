@@ -224,7 +224,7 @@ const BlogEditor: React.FC<BlogEditorProps> = ({ post, onClose, onSave, onDelete
 
               <div className="min-h-[500px] bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
                  <Editor
-                    apiKey={import.meta.env.VITE_TINYMCE_API_KEY || "no-api-key"}
+                    apiKey={import.meta.env.VITE_TINYMCE_API_KEY || "bjfz49wf134r7ixx9lfmb927vvkjakeui90jmurlbwtn0485"}
                     onInit={(evt, editor) => editorRef.current = editor}
                     value={content}
                     onEditorChange={handleEditorChange}
