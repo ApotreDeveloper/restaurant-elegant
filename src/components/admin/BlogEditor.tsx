@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import ReactQuill from 'react-quill';
+import { Editor } from '@tinymce/tinymce-react';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -29,6 +28,7 @@ import Input from '../shared/Input';
 import Modal from '../shared/Modal';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import { cn } from '../../utils/cn';
+import { useToast } from '../../contexts/ToastContext';
 
 // --- Types & Schema ---
 const schema = z.object({
@@ -57,8 +57,9 @@ const BlogEditor: React.FC<BlogEditorProps> = ({ post, onClose, onSave, onDelete
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [slugError, setSlugError] = useState<string | null>(null);
+  const { showSuccess, showError } = useToast();
   
-  const quillRef = useRef<ReactQuill>(null);
+  const editorRef = useRef<any>(null);
 
   const { register, control, handleSubmit, watch, setValue, formState: { errors, isDirty } } = useForm({
     resolver: zodResolver(schema),
@@ -78,15 +79,15 @@ const BlogEditor: React.FC<BlogEditorProps> = ({ post, onClose, onSave, onDelete
   const status = watch('status');
   const featuredImage = watch('image');
 
-  // Auto-generate slug from title if slug hasn't been manually edited (heuristic)
+  // Auto-generate slug from title
   useEffect(() => {
-    if (title && slug === post.slug && post.status === 'draft') {
+    if (title && (!slug || slug === post.slug)) {
       const generated = generateSlug(title);
       setValue('slug', generated, { shouldValidate: true });
     }
-  }, [title, setValue, slug, post.slug, post.status]);
+  }, [title]);
 
-  // Check slug uniqueness on blur or change
+  // Check slug uniqueness on change
   useEffect(() => {
     const checkSlug = async () => {
       if (slug && slug !== post.slug) {
@@ -100,52 +101,23 @@ const BlogEditor: React.FC<BlogEditorProps> = ({ post, onClose, onSave, onDelete
     return () => clearTimeout(timer);
   }, [slug, post.id, post.slug]);
 
-  // Auto-save
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (isDirty || content !== post.content) {
-        handleSilentSave();
-      }
-    }, 30000); // 30 seconds
-    return () => clearInterval(timer);
-  }, [isDirty, content, post.content]);
-
-  // Quill Image Handler
-  const imageHandler = () => {
-    const input = document.createElement('input');
-    input.setAttribute('type', 'file');
-    input.setAttribute('accept', 'image/*');
-    input.click();
-
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (file) {
-        try {
-          const url = await uploadBlogImage(file);
-          const quill = quillRef.current?.getEditor();
-          const range = quill?.getSelection();
-          if (quill && range) {
-            quill.insertEmbed(range.index, 'image', url);
-          }
-        } catch (error) {
-          console.error('Image upload failed', error);
-          alert("Erreur lors de l'upload de l'image");
-        }
-      }
-    };
-  };
-
-  const handleSilentSave = async () => {
-    setIsSaving(true);
-    // Gather data manually as we are outside submit handler
-    // In real app, cleaner way exists, but for now:
-    // ...
-    setIsSaving(false);
-    setLastSaved(new Date());
-  };
+  // TinyMCE Image Upload Handler
+  const handleImageUpload = (blobInfo: any, progress: any) => new Promise<string>(async (resolve, reject) => {
+    try {
+      const file = blobInfo.blob();
+      const url = await uploadBlogImage(file);
+      resolve(url);
+    } catch (error) {
+      reject('Erreur lors de l\'upload de l\'image');
+    }
+  });
 
   const onFormSubmit = async (data: any) => {
-    if (slugError) return;
+    if (slugError) {
+      showError("Impossible de sauvegarder : le slug est déjà utilisé");
+      return;
+    }
+    
     setIsSaving(true);
     try {
       const updated = await updateBlogPost(post.id, {
@@ -154,10 +126,11 @@ const BlogEditor: React.FC<BlogEditorProps> = ({ post, onClose, onSave, onDelete
         published_at: data.status === 'published' && !data.published_at ? new Date().toISOString() : data.published_at
       });
       setLastSaved(new Date());
+      showSuccess("Article sauvegardé avec succès !");
       onSave(updated);
     } catch (error) {
       console.error(error);
-      alert("Erreur lors de la sauvegarde");
+      showError("Erreur lors de la sauvegarde de l'article");
     } finally {
       setIsSaving(false);
     }
@@ -165,32 +138,19 @@ const BlogEditor: React.FC<BlogEditorProps> = ({ post, onClose, onSave, onDelete
 
   const handleFeaturedImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
-      const url = await uploadBlogImage(e.target.files[0]);
-      setValue('image', url, { shouldDirty: true });
-    }
-  };
-
-  const quillModules = {
-    toolbar: {
-      container: [
-        [{ 'header': [2, 3, 4, false] }],
-        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-        ['link', 'image', 'code-block'],
-        ['clean']
-      ],
-      handlers: {
-        image: imageHandler
+      try {
+        const url = await uploadBlogImage(e.target.files[0]);
+        setValue('image', url, { shouldDirty: true });
+        showSuccess("Image mise en avant ajoutée !");
+      } catch (error) {
+        showError("Erreur lors de l'upload de l'image");
       }
     }
   };
 
-  const quillFormats = [
-    'header',
-    'bold', 'italic', 'underline', 'strike', 'blockquote',
-    'list', 'bullet',
-    'link', 'image', 'code-block'
-  ];
+  const handleEditorChange = (content: string, editor: any) => {
+    setContent(content);
+  };
 
   return (
     <div className="fixed inset-0 bg-slate-50 z-50 flex flex-col animate-in fade-in duration-300">
@@ -205,19 +165,26 @@ const BlogEditor: React.FC<BlogEditorProps> = ({ post, onClose, onSave, onDelete
              <span className={cn("text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded", status === 'published' ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700")}>
                 {status === 'published' ? 'Publié' : 'Brouillon'}
              </span>
-             {lastSaved && <span className="text-xs text-slate-400 ml-3">Sauvegardé à {lastSaved.toLocaleTimeString()}</span>}
+             {lastSaved && (
+                <span className="ml-4 text-xs text-slate-400 flex items-center gap-1">
+                   <Check size={12} /> Sauvegardé {lastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                </span>
+             )}
           </div>
         </div>
-
+        
         <div className="flex items-center gap-3">
-          {isSaving && <LoadingSpinner size="sm" className="mr-2" />}
           
           <Button variant="outline" onClick={() => setIsPreviewOpen(true)} leftIcon={<Eye size={16}/>}>
              Aperçu
           </Button>
           
-          <Button onClick={handleSubmit(onFormSubmit)} leftIcon={<Save size={16}/>}>
-             Enregistrer
+          <Button 
+            onClick={handleSubmit(onFormSubmit)} 
+            leftIcon={isSaving ? <LoadingSpinner /> : <Save size={16}/>}
+            disabled={isSaving}
+          >
+             {isSaving ? 'Sauvegarde...' : 'Enregistrer'}
           </Button>
           
           <button onClick={() => setIsDeleteModalOpen(true)} className="p-2 text-slate-400 hover:text-red-500 transition-colors ml-2">
@@ -256,15 +223,35 @@ const BlogEditor: React.FC<BlogEditorProps> = ({ post, onClose, onSave, onDelete
               </div>
 
               <div className="min-h-[500px] bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-                 <ReactQuill 
-                    ref={quillRef}
-                    theme="snow"
+                 <Editor
+                    apiKey="no-api-key"
+                    onInit={(evt, editor) => editorRef.current = editor}
                     value={content}
-                    onChange={setContent}
-                    modules={quillModules}
-                    formats={quillFormats}
-                    className="h-full border-none"
-                    placeholder="Rédigez votre histoire..."
+                    onEditorChange={handleEditorChange}
+                    init={{
+                      height: 500,
+                      menubar: false,
+                      plugins: [
+                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                        'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                        'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount'
+                      ],
+                      toolbar: 'undo redo | blocks | ' +
+                        'bold italic forecolor | alignleft aligncenter ' +
+                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                        'removeformat | image link | code | help',
+                      content_style: 'body { font-family: Georgia, serif; font-size: 16px; line-height: 1.6; padding: 20px; }',
+                      images_upload_handler: handleImageUpload,
+                      automatic_uploads: true,
+                      file_picker_types: 'image',
+                      image_advtab: true,
+                      image_caption: true,
+                      placeholder: 'Rédigez votre histoire...',
+                      skin: 'oxide',
+                      content_css: 'default',
+                      branding: false,
+                      promotion: false
+                    }}
                  />
               </div>
            </div>
@@ -359,7 +346,7 @@ const BlogEditor: React.FC<BlogEditorProps> = ({ post, onClose, onSave, onDelete
               <button 
                  type="button"
                  onClick={() => {
-                    const text = quillRef.current?.getEditor().getText() || "";
+                    const text = editorRef.current?.getContent({ format: 'text' }) || "";
                     setValue('excerpt', text.slice(0, 200).trim() + '...', { shouldDirty: true });
                  }}
                  className="text-xs text-primary font-bold hover:underline"
