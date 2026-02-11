@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Save, Bell, Globe, ShoppingBag, Moon, Clock } from 'lucide-react';
-import { getSitePreferences, updateSitePreferences } from '../../../services/api/preferences';
+import { getSitePreferences, updateSitePreferences } from '../../../services/api/preferences'; 
 import Button from '../../shared/Button';
 import LoadingSpinner from '../../shared/LoadingSpinner';
 import Input from '../../shared/Input';
