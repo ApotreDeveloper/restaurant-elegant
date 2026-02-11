@@ -289,7 +289,7 @@ const AboutSettings: React.FC<AboutSettingsProps> = ({ initialData, onRefresh })
                               control={control}
                               render={({ field }) => (
                                  <Editor
-                                    apiKey="no-api-key"
+                                    apiKey={import.meta.env.VITE_TINYMCE_API_KEY || "no-api-key"}
                                     onInit={(evt, editor) => editorRef.current = editor}
                                     value={field.value}
                                     onEditorChange={field.onChange}
