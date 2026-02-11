@@ -1,6 +1,5 @@
-
-import React, { useState, useEffect } from 'react';
-import ReactQuill from 'react-quill';
+import React, { useState, useEffect, useRef } from 'react';
+import { Editor } from '@tinymce/tinymce-react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,6 +26,7 @@ import { cn } from '../../../utils/cn';
 import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { useToast } from '../../../contexts/ToastContext';
 
 const teamMemberSchema = z.object({
   id: z.string(),
@@ -74,11 +74,17 @@ const SortableTeamMember = ({
   const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 50 : 'auto', position: 'relative' as 'relative' };
   
   const photoUrl = watch(`team_members.${index}.photo_url`);
+  const { showSuccess, showError } = useToast();
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
-      const url = await uploadRestaurantImage(e.target.files[0]);
-      setValue(`team_members.${index}.photo_url`, url, { shouldDirty: true });
+      try {
+        const url = await uploadRestaurantImage(e.target.files[0]);
+        setValue(`team_members.${index}.photo_url`, url, { shouldDirty: true });
+        showSuccess("Photo ajoutée !");
+      } catch (error) {
+        showError("Erreur lors de l'upload de la photo");
+      }
     }
   };
 
@@ -135,6 +141,8 @@ const SortableTeamMember = ({
 const AboutSettings: React.FC<AboutSettingsProps> = ({ initialData, onRefresh }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'content' | 'team'>('content');
+  const editorRef = useRef<any>(null);
+  const { showSuccess, showError } = useToast();
 
   const { register, control, handleSubmit, setValue, watch, reset } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -176,10 +184,26 @@ const AboutSettings: React.FC<AboutSettingsProps> = ({ initialData, onRefresh })
 
   const handleStoryImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
-      const url = await uploadRestaurantImage(e.target.files[0]);
-      setValue('story_image', url, { shouldDirty: true });
+      try {
+        const url = await uploadRestaurantImage(e.target.files[0]);
+        setValue('story_image', url, { shouldDirty: true });
+        showSuccess("Image d'illustration ajoutée !");
+      } catch (error) {
+        showError("Erreur lors de l'upload de l'image");
+      }
     }
   };
+
+  // TinyMCE Image Upload Handler
+  const handleImageUpload = (blobInfo: any, progress: any) => new Promise<string>(async (resolve, reject) => {
+    try {
+      const file = blobInfo.blob();
+      const url = await uploadRestaurantImage(file);
+      resolve(url);
+    } catch (error) {
+      reject('Erreur lors de l\'upload de l\'image');
+    }
+  });
 
   const onSubmit = async (data: FormData) => {
     setIsSaving(true);
@@ -202,11 +226,11 @@ const AboutSettings: React.FC<AboutSettingsProps> = ({ initialData, onRefresh })
       };
 
       await updateAboutPageData(payload);
-      alert("Page 'À Propos' mise à jour avec succès !");
+      showSuccess("Page 'À Propos' mise à jour avec succès !");
       onRefresh();
     } catch (error) {
       console.error(error);
-      alert("Erreur lors de la sauvegarde");
+      showError("Erreur lors de la sauvegarde");
     } finally {
       setIsSaving(false);
     }
@@ -259,16 +283,40 @@ const AboutSettings: React.FC<AboutSettingsProps> = ({ initialData, onRefresh })
                      <Input label="Titre de section" {...register('story_title')} />
                      <div className="space-y-2">
                         <label className="block text-xs uppercase tracking-wider text-secondary/70 font-bold">Contenu (Riche)</label>
-                        <div className="bg-white">
+                        <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                            <Controller
                               name="story_content"
                               control={control}
                               render={({ field }) => (
-                                 <ReactQuill 
-                                    theme="snow" 
-                                    value={field.value} 
-                                    onChange={field.onChange} 
-                                    className="bg-white h-64 mb-12"
+                                 <Editor
+                                    apiKey="no-api-key"
+                                    onInit={(evt, editor) => editorRef.current = editor}
+                                    value={field.value}
+                                    onEditorChange={field.onChange}
+                                    init={{
+                                      height: 300,
+                                      menubar: false,
+                                      plugins: [
+                                        'advlist', 'autolink', 'lists', 'link', 'image', 'charmap',
+                                        'anchor', 'searchreplace', 'visualblocks', 'code',
+                                        'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                                      ],
+                                      toolbar: 'undo redo | blocks | ' +
+                                        'bold italic forecolor | alignleft aligncenter ' +
+                                        'alignright alignjustify | bullist numlist outdent indent | ' +
+                                        'removeformat | image link | help',
+                                      content_style: 'body { font-family: Georgia, serif; font-size: 16px; line-height: 1.6; padding: 20px; }',
+                                      images_upload_handler: handleImageUpload,
+                                      automatic_uploads: true,
+                                      file_picker_types: 'image',
+                                      image_advtab: true,
+                                      image_caption: true,
+                                      placeholder: 'Racontez votre histoire...',
+                                      skin: 'oxide',
+                                      content_css: 'default',
+                                      branding: false,
+                                      promotion: false
+                                    }}
                                  />
                               )}
                            />
