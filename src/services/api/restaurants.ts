@@ -1,4 +1,3 @@
-
 import { supabase } from '../supabase';
 
 export interface OpeningHoursDay {
@@ -89,7 +88,7 @@ export const getRestaurantInfo = async (): Promise<RestaurantInfo> => {
       address: data.address,
       phone: data.phone,
       email: data.email,
-      website: data.website || '', // Assuming website column might exist or default empty
+      website: data.website || '',
       logo_url: data.logo_url,
       openingHours: data.opening_hours || {},
       social: data.social_links || {},
@@ -107,43 +106,65 @@ export const getRestaurantInfo = async (): Promise<RestaurantInfo> => {
   }
 };
 
-export const updateRestaurantInfo = async (data: Partial<RestaurantInfo>): Promise<{ success: boolean }> => {
+export const updateRestaurantInfo = async (data: Partial<RestaurantInfo>): Promise<RestaurantInfo> => {
   try {
     // Transform back to DB structure
     const dbData: any = {};
-    if (data.name) dbData.name = data.name;
-    if (data.tagline) dbData.tagline = data.tagline;
-    if (data.description) dbData.description = data.description;
-    if (data.address) dbData.address = data.address;
-    if (data.phone) dbData.phone = data.phone;
-    if (data.email) dbData.email = data.email;
-    if (data.logo_url) dbData.logo_url = data.logo_url;
-    if (data.openingHours) dbData.opening_hours = data.openingHours;
-    if (data.social) dbData.social_links = data.social;
-    
-    // We update the single row that exists (or ID if we had it in context)
-    // For simplicity, we update all rows or the first one found.
-    // In a multi-tenant system, we would filter by ID.
-    // Here we assume one restaurant.
+    if (data.name !== undefined) dbData.name = data.name;
+    if (data.tagline !== undefined) dbData.tagline = data.tagline;
+    if (data.description !== undefined) dbData.description = data.description;
+    if (data.address !== undefined) dbData.address = data.address;
+    if (data.phone !== undefined) dbData.phone = data.phone;
+    if (data.email !== undefined) dbData.email = data.email;
+    if (data.website !== undefined) dbData.website = data.website;
+    if (data.logo_url !== undefined) dbData.logo_url = data.logo_url;
+    if (data.openingHours !== undefined) dbData.opening_hours = data.openingHours;
+    if (data.social !== undefined) dbData.social_links = data.social;
     
     // First get the ID
-    const { data: existing } = await supabase.from('restaurants').select('id').single();
+    const { data: existing, error: fetchError } = await supabase
+      .from('restaurants')
+      .select('id')
+      .single();
     
-    if (existing) {
-      const { error } = await supabase
-        .from('restaurants')
-        .update(dbData)
-        .eq('id', existing.id);
-      
-      if (error) throw error;
-    } else {
-        // Handle case where no restaurant exists (insert?)
+    if (fetchError) throw fetchError;
+    
+    if (!existing) {
+      throw new Error('Aucun restaurant trouvé dans la base de données');
     }
 
-    return { success: true };
+    const { data: updated, error: updateError } = await supabase
+      .from('restaurants')
+      .update(dbData)
+      .eq('id', existing.id)
+      .select()
+      .single();
+    
+    if (updateError) throw updateError;
+
+    // Return the updated data in the same format as getRestaurantInfo
+    return {
+      id: updated.id,
+      name: updated.name,
+      tagline: updated.tagline || '',
+      description: updated.description || '',
+      address: updated.address,
+      phone: updated.phone,
+      email: updated.email,
+      website: updated.website || '',
+      logo_url: updated.logo_url,
+      openingHours: updated.opening_hours || {},
+      social: updated.social_links || {},
+      settings: data.settings || {
+        delivery_fee: 1000,
+        tax_rate: 18,
+        min_order_free_delivery: 50000,
+        preparation_time: 45
+      }
+    };
   } catch (error) {
     console.error('Error updating restaurant info:', error);
-    return { success: false };
+    throw error;
   }
 };
 
@@ -181,16 +202,16 @@ export const getAboutPageData = async (): Promise<AboutPageData> => {
 
     return {
       title: data.title || '',
-      subtitle: '', // Not in schema, defaulting
-      story_title: 'Notre Histoire', // Default
+      subtitle: data.subtitle || '',
+      story_title: data.story_title || 'Notre Histoire',
       story_content: data.content || '',
-      story_image: 'https://images.unsplash.com/photo-1514362545857-3bc16549766b?q=80&w=1200', // Default if missing
+      story_image: data.story_image || 'https://images.unsplash.com/photo-1514362545857-3bc16549766b?q=80&w=1200',
       mission: data.mission || '',
       vision: data.vision || '',
-      chef_quote: '',
-      chef_quote_author: '',
+      chef_quote: data.chef_quote || '',
+      chef_quote_author: data.chef_quote_author || '',
       team_members: data.team_members || [],
-      values: [ // Hardcoded/Default values as not in schema
+      values: [
         { id: '1', title: "Qualité", description: "Sélection rigoureuse des meilleurs produits.", icon: "Star" },
         { id: '2', title: "Passion", description: "L'amour du métier dans chaque geste.", icon: "Heart" },
         { id: '3', title: "Authenticité", description: "Respect des traditions.", icon: "Leaf" },
@@ -204,28 +225,56 @@ export const getAboutPageData = async (): Promise<AboutPageData> => {
   }
 };
 
-export const updateAboutPageData = async (data: Partial<AboutPageData>): Promise<{ success: boolean }> => {
+export const updateAboutPageData = async (data: Partial<AboutPageData>): Promise<AboutPageData> => {
   try {
     const dbData: any = {};
-    if (data.title) dbData.title = data.title;
-    if (data.story_content) dbData.content = data.story_content;
-    if (data.mission) dbData.mission = data.mission;
-    if (data.vision) dbData.vision = data.vision;
-    if (data.team_members) dbData.team_members = data.team_members;
+    if (data.title !== undefined) dbData.title = data.title;
+    if (data.subtitle !== undefined) dbData.subtitle = data.subtitle;
+    if (data.story_title !== undefined) dbData.story_title = data.story_title;
+    if (data.story_content !== undefined) dbData.content = data.story_content;
+    if (data.story_image !== undefined) dbData.story_image = data.story_image;
+    if (data.mission !== undefined) dbData.mission = data.mission;
+    if (data.vision !== undefined) dbData.vision = data.vision;
+    if (data.chef_quote !== undefined) dbData.chef_quote = data.chef_quote;
+    if (data.chef_quote_author !== undefined) dbData.chef_quote_author = data.chef_quote_author;
+    if (data.team_members !== undefined) dbData.team_members = data.team_members;
 
-    const { data: existing } = await supabase.from('about_page').select('id').single();
+    const { data: existing, error: fetchError } = await supabase
+      .from('about_page')
+      .select('id')
+      .single();
 
-    if (existing) {
-      const { error } = await supabase
-        .from('about_page')
-        .update(dbData)
-        .eq('id', existing.id);
-      if (error) throw error;
+    if (fetchError) throw fetchError;
+
+    if (!existing) {
+      throw new Error('Aucune page "À Propos" trouvée dans la base de données');
     }
 
-    return { success: true };
+    const { data: updated, error: updateError } = await supabase
+      .from('about_page')
+      .update(dbData)
+      .eq('id', existing.id)
+      .select()
+      .single();
+      
+    if (updateError) throw updateError;
+
+    return {
+      title: updated.title || '',
+      subtitle: updated.subtitle || '',
+      story_title: updated.story_title || 'Notre Histoire',
+      story_content: updated.content || '',
+      story_image: updated.story_image || '',
+      mission: updated.mission || '',
+      vision: updated.vision || '',
+      chef_quote: updated.chef_quote || '',
+      chef_quote_author: updated.chef_quote_author || '',
+      team_members: updated.team_members || [],
+      values: data.values || [],
+      awards: data.awards || []
+    };
   } catch (error) {
     console.error('Error updating about page:', error);
-    return { success: false };
+    throw error;
   }
 };

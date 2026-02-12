@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,6 +13,7 @@ import Button from '../../shared/Button';
 import LoadingSpinner from '../../shared/LoadingSpinner';
 import { Upload, X, Save, Clock, MapPin, Globe, Phone, Mail } from 'lucide-react';
 import { cn } from '../../../utils/cn';
+import { useToast } from '../../../contexts/ToastContext';
 
 const schema = z.object({
   name: z.string().min(2, "Nom requis"),
@@ -49,6 +49,7 @@ const GeneralSettings: React.FC<GeneralSettingsProps> = ({ initialData, onRefres
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [openingHours, setOpeningHours] = useState<Record<string, OpeningHoursDay>>({});
+  const { showSuccess, showError } = useToast();
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<FormData>({
     resolver: zodResolver(schema)
@@ -90,8 +91,9 @@ useEffect(() => {
       try {
         const url = await uploadRestaurantImage(file);
         setLogoPreview(url);
+        showSuccess("Logo uploadé avec succès !");
       } catch (err) {
-        alert("Erreur lors de l'upload du logo");
+        showError("Erreur lors de l'upload du logo");
       }
     }
   };
@@ -126,11 +128,11 @@ useEffect(() => {
         logo_url: logoPreview || undefined,
         openingHours
       });
-      alert("Paramètres enregistrés avec succès !");
+      showSuccess("Paramètres enregistrés avec succès !");
       onRefresh();
     } catch (error) {
       console.error(error);
-      alert("Erreur lors de l'enregistrement");
+      showError("Erreur lors de l'enregistrement des paramètres");
     } finally {
       setIsSaving(false);
     }
