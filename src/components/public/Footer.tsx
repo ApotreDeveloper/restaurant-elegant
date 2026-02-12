@@ -1,9 +1,21 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Twitter, MapPin, Phone, Mail, ArrowRight, Clock, UtensilsCrossed } from 'lucide-react';
+import { useSiteSettingsStore } from '../../stores/useSiteSettingsStore';
+import { useRestaurantStore } from '../../stores/useRestaurantStore';
 
 const Footer: React.FC = () => {
+  const navigationMenu = useSiteSettingsStore((state) => state.navigationMenu);
+  const restaurantInfo = useRestaurantStore((state) => state.restaurantInfo);
+  const fetchRestaurantInfo = useRestaurantStore((state) => state.fetchRestaurantInfo);
+
+  useEffect(() => {
+    if (!restaurantInfo) {
+      fetchRestaurantInfo();
+    }
+  }, [restaurantInfo, fetchRestaurantInfo]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     alert("Merci pour votre inscription à notre newsletter !");
@@ -35,18 +47,10 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="font-serif text-xl text-primary font-bold mb-6">Navigation</h4>
             <ul className="space-y-3">
-              {[
-                { label: 'Accueil', path: '/' },
-                { label: 'Menu', path: '/menu' },
-                { label: 'Réserver', path: '/reservation' },
-                { label: 'Commander', path: '/commande' },
-                { label: 'Galerie', path: '/galerie' },
-                { label: 'Blog', path: '/blog' },
-                { label: 'À Propos', path: '/a-propos' },
-              ].map((link) => (
-                <li key={link.path}>
+              {navigationMenu.map((link) => (
+                <li key={link.id}>
                   <Link 
-                    to={link.path} 
+                    to={link.url} 
                     className="text-accent/70 hover:text-primary hover:translate-x-1 transition-all duration-300 flex items-center gap-2 text-sm group"
                   >
                     <span className="w-1.5 h-1.5 bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></span>
@@ -63,15 +67,15 @@ const Footer: React.FC = () => {
             <ul className="space-y-4">
               <li className="flex items-start gap-3 text-sm text-accent/80 group">
                 <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5 group-hover:text-white transition-colors" />
-                <span>123 Avenue des Champs-Élysées,<br/>75008 Paris, France</span>
+                <span>{restaurantInfo?.address || '123 Avenue des Champs-Élysées, 75008 Paris'}</span>
               </li>
               <li className="flex items-center gap-3 text-sm text-accent/80 group">
                 <Phone className="w-5 h-5 text-primary shrink-0 group-hover:text-white transition-colors" />
-                <span>+33 1 23 45 67 89</span>
+                <span>{restaurantInfo?.phone || '+33 1 23 45 67 89'}</span>
               </li>
               <li className="flex items-center gap-3 text-sm text-accent/80 group">
                 <Mail className="w-5 h-5 text-primary shrink-0 group-hover:text-white transition-colors" />
-                <span>contact@legourmet.fr</span>
+                <span>{restaurantInfo?.email || 'contact@legourmet.fr'}</span>
               </li>
             </ul>
           </div>
