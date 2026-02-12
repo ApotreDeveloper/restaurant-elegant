@@ -5,12 +5,14 @@ import { Menu, X, ShoppingBag, Calendar, UtensilsCrossed } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import Button from '../shared/Button';
 import { useCartStore } from '../../stores/useCartStore';
+import { useSiteSettingsStore } from '../../stores/useSiteSettingsStore';
 
 const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const cart = useCartStore((state) => state.cart);
+  const navigationMenu = useSiteSettingsStore((state) => state.navigationMenu);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,15 +30,10 @@ const Header: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const navLinks = [
-    { name: 'Accueil', path: '/' },
-    { name: 'Menu', path: '/menu' },
-    { name: 'Réserver', path: '/reservation' },
-    { name: 'Commander', path: '/commande' },
-    { name: 'Galerie', path: '/galerie' },
-    { name: 'Blog', path: '/blog' },
-    { name: 'À propos', path: '/a-propos' },
-  ];
+  const navLinks = navigationMenu.map((item) => ({
+    name: item.label,
+    path: item.url
+  }));
 
   return (
     <header

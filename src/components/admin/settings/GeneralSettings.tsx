@@ -30,11 +30,12 @@ const schema = z.object({
     preparation_time: z.number().min(1)
   }),
   social: z.object({
-    facebook: z.string().url().optional().or(z.literal('')),
-    instagram: z.string().url().optional().or(z.literal('')),
-    twitter: z.string().url().optional().or(z.literal('')),
-    tiktok: z.string().url().optional().or(z.literal('')),
-    linkedin: z.string().url().optional().or(z.literal(''))
+    // Accept plain handles or placeholder values (e.g. "#") to avoid blocking form submit.
+    facebook: z.string().optional(),
+    instagram: z.string().optional(),
+    twitter: z.string().optional(),
+    tiktok: z.string().optional(),
+    linkedin: z.string().optional()
   })
 });
 

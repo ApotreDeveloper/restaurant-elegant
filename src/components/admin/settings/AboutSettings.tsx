@@ -29,7 +29,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { useToast } from '../../../contexts/ToastContext';
 
 const teamMemberSchema = z.object({
-  id: z.string(),
+  id: z.string().optional(),
   name: z.string().min(2, "Nom requis"),
   role: z.string().min(2, "Rôle requis"),
   bio: z.string().optional(),
@@ -168,7 +168,10 @@ const AboutSettings: React.FC<AboutSettingsProps> = ({ initialData, onRefresh })
         vision: initialData.vision,
         chef_quote: initialData.chef_quote,
         chef_quote_author: initialData.chef_quote_author,
-        team_members: initialData.team_members || []
+        team_members: (initialData.team_members || []).map((member, index) => ({
+          ...member,
+          id: member.id || `member-${index}-${Date.now()}`
+        }))
       });
     }
   }, [initialData, reset]);
@@ -218,6 +221,7 @@ const AboutSettings: React.FC<AboutSettingsProps> = ({ initialData, onRefresh })
         chef_quote: data.chef_quote || "",
         chef_quote_author: data.chef_quote_author || "",
         team_members: data.team_members.map((member) => ({
+          id: member.id,
           ...member,
           bio: member.bio || "",
           photo_url: member.photo_url || "",

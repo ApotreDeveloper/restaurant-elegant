@@ -1,6 +1,10 @@
 
 export const formatPrice = (amount: number): string => {
-  return new Intl.NumberFormat('fr-FR').format(amount) + ' FCFA';
+  const currency = localStorage.getItem('site-currency') || 'FCFA';
+  const language = localStorage.getItem('site-language') || 'fr';
+  const locale = language === 'en' ? 'en-US' : language === 'ar' ? 'ar' : 'fr-FR';
+
+  return new Intl.NumberFormat(locale).format(amount) + ` ${currency}`;
 };
 
 export const formatDate = (dateStr: string): string => {
